@@ -6,6 +6,7 @@ import numpy as np
 import nltk
 nltk.download('stopwords')
 
+from bert_utils import *
 
 def preproccess(df, text_column, category_column):
 
@@ -48,20 +49,21 @@ def get_catboost_predictions(df, model):
     return df
 
 
-def get_bert_prediction(df):
-    # TODO
-    return df
 
+def get_prediction_final(df):
 
-def get_prediction(df):
-
-    model = CatBoostClassifier()
-    model.load_model('catboost_final_model.cbm')
+    model_cb = CatBoostClassifier()
+    model_cb.load_model('catboost_final_model.cbm')
+    
     text_column = 'Наименование'
     category_column = 'Подкатегория_текст'
-
+    
+    path_to_pretrained_model = '../model6'
+    model = BertForSequenceClassification.from_pretrained(path_to_pretrained_model)
+    tokenizer = BertTokenizerFast.from_pretrained('sberbank-ai/ruBert-base')
+    label_df = pd.read_csv('../label_df.csv')
+    
     df = preproccess(df, text_column, category_column)
-    df = get_catboost_predictions(df, model)
-    df = get_bert_prediction(df)
-
+    df = get_catboost_predictions(df, model_cb)
+    df = bert_inference(df, text_column, tokenizer, model, label_df)
     return df
